@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Credit Transfer App</title>
+</head>
+<body>
+  <h1>Credit System</h1>
+
+  <h3>Add Person</h3>
+  <input id="name" placeholder="Name" />
+  <input id="credit" placeholder="Starting Credits" type="number" />
+  <button id="addBtn">Add</button>
+
+  <h3>Send Credits</h3>
+  <select id="from"></select> to 
+  <select id="to"></select> 
+  <input id="amount" type="number" placeholder="Amount" />
+  <button id="sendBtn">Send</button>
+
+  <h3>People</h3>
+  <ul id="peopleList"></ul>
+
+  <script>
+    // Load saved people or use an empty object
+    let people = JSON.parse(localStorage.getItem("people")) || {};
+
+    // Save to localStorage
+    function savePeople() {
+      localStorage.setItem("people", JSON.stringify(people));
+    }
+
+    // Update the people list and dropdowns
+    function updateList() {
+      const list = document.getElementById("peopleList");
+      const from = document.getElementById("from");
+      const to = document.getElementById("to");
+      list.innerHTML = "";
+      from.innerHTML = "";
+      to.innerHTML = "";
+
+      for (let name in people) {
+        list.innerHTML += <li>${name}: ${people[name]} credits</li>;
+        from.innerHTML += <option value="${name}">${name}</option>;
+        to.innerHTML += <option value="${name}">${name}</option>;
+      }
+    }
+
+    // Add a person
+    function addPerson() {
+      const name = document.getElementById("name").value.trim();
+      const credit = parseInt(document.getElementById("credit").value);
+
+      if (!name || isNaN(credit)) {
+        alert("Please enter a valid name and number.");
+        return;
+      }
+
+      if (people[name]) {
+        alert("Name already exists!");
+        return;
+      }
+
+      people[name] = credit;
+      savePeople();
+      updateList();
+      document.getElementById("name").value = "";
+      document.getElementById("credit").value = "";
+    }
+
+    // Send credits between people
+    function sendCredits() {
+      const from = document.getElementById("from").value;
+      const to = document.getElementById("to").value;
+      const amount = parseInt(document.getElementById("amount").value);
+
+      if (from === to) {
+        alert("Cannot send to the same person.");
+        return;
+      }
+
+      if (isNaN(amount) || amount <= 0 || people[from] < amount) {
+        alert("Invalid amount or not enough credits.");
+        return;
+      }
+
+      people[from] -= amount;
+      people[to] += amount;
+      savePeople();
+      updateList();
+      document.getElementById("amount").value = "";
+    }
+
+    // Attach button events once page is loaded
+    document.getElementById("addBtn").addEventListener("click", addPerson);
+    document.getElementById("sendBtn").addEventListener("click", sendCredits);
+
+    // Initialize the app
+    updateList();
+  </script>
+</body>
+</html>
