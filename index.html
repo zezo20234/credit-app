@@ -1,90 +1,29 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Credit System</title>
+<meta charset="UTF-8">  
+  <link rel="stylesheet" href="css/iii.css">
+  <title>credits_website</title>
 </head>
 <body>
-  <h1>Credit System</h1>
-
-  <h3>Add Person</h3>
-  <input id="name" placeholder="Name" />
-  <input id="credit" placeholder="Starting Credits" type="number" />
-  <button onclick="addPerson()">Add</button>
-
-  <h3>Send Credits</h3>
-  <select id="from"></select> to 
-  <select id="to"></select> 
-  <input id="amount" type="number" placeholder="Amount" />
-  <button onclick="sendCredits()">Send</button>
-
-  <h3>People</h3>
-  <ul id="peopleList"></ul>
-
-  <script>
-    let people = JSON.parse(localStorage.getItem("people")) || {};
-
-    function savePeople() {
-      localStorage.setItem("people", JSON.stringify(people));
-    }
-
-    function updateList() {
-      const list = document.getElementById("peopleList");
-      list.innerHTML = "";
-      const from = document.getElementById("from");
-      const to = document.getElementById("to");
-      from.innerHTML = "";
-      to.innerHTML = "";
-      for (let name in people) {
-        list.innerHTML += <li>${name}: ${people[name]} credits</li>;
-        from.innerHTML += <option value="${name}">${name}</option>;
-        to.innerHTML += <option value="${name}">${name}</option>;
-      }
-    }
-
-    function addPerson() {
-      const name = document.getElementById("name").value.trim();
-      const credit = parseInt(document.getElementById("credit").value);
-
-      if (!name || isNaN(credit)) {
-        alert("Enter a valid name and number.");
-        return;
-      }
-
-      if (people[name]) {
-        alert("Name already exists.");
-        return;
-      }
-
-      people[name] = credit;
-      savePeople();
-      updateList();
-      document.getElementById("name").value = "";
-      document.getElementById("credit").value = "";
-    }
-
-    function sendCredits() {
-      const from = document.getElementById("from").value;
-      const to = document.getElementById("to").value;
-      const amount = parseInt(document.getElementById("amount").value);
-
-      if (from === to) {
-        alert("Cannot send to the same person.");
-        return;
-      }
-
-      if (isNaN(amount) || amount <= 0 || people[from] < amount) {
-        alert("Invalid amount or not enough credits.");
-        return;
-      }
-
-      people[from] -= amount;
-      people[to] += amount;
-      savePeople();
-      updateList();
-      document.getElementById("amount").value = "";
-    }
-
-    updateList();
-  </script>
+  <div>
+    <p>Asser: 1,500C 0D</p>
+  </div>
+  <div>
+    <p>Layan: 0C 5D</p>
+  </div>
+  <hr>
+  <form action="https://formsubmit.co/zezo_z4ever@outlook.com" method="post">
+    <input type="name" placeholder="your name">
+    <br>
+    <br>
+    <input type="send_name" placeholder="send to who">
+    <br>
+    <br>
+    <input type="number" placeholder="send how much" max="2,500" min="100" value="100" step="100">
+    <br>
+    <br>
+    <input type="submit">
+  </form>
 </body>
-</html>
+</html> 
