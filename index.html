@@ -10,6 +10,8 @@ body { font-family: sans-serif; background: #0b1020; color: white; margin: 0; }
 button { padding: 8px 12px; margin: 4px; cursor: pointer; border-radius: 6px; }
 #flightCounter { position: fixed; top: 10px; left: 10px; background: #10b981; padding: 5px 10px; border-radius: 8px; font-weight: bold; }
 canvas { background: white; }
+.licenseCard { background: #1f2937; padding: 10px; border-radius: 8px; margin: 8px 0; width: 200px; display: inline-block; vertical-align: top; }
+.licenseCard img { display: block; margin: auto; }
 </style>
 </head>
 <body>
@@ -49,6 +51,11 @@ canvas { background: white; }
 <script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
 <script>
 const USERS = { asser:'456', lilly:'246', zezo:'000' };
+const airlineModels = {
+  'EasyJet': 'easyjet.png',
+  'Wizz Air': 'wizzair.png',
+  'Ryanair': 'ryanair.png'
+};
 let currentUser = null;
 let flightCount = 0;
 let licenses = [];
@@ -111,12 +118,23 @@ function secureAction(fn) {
 function addLicense() {
   const weeks = prompt('How many weeks?','2');
   const airline = prompt('Airline (EasyJet/Wizz Air/Ryanair)','EasyJet');
+  if (!airlineModels[airline]) {
+    alert('Unknown airline');
+    return;
+  }
   const id = Date.now();
   const qrData = JSON.stringify({user:currentUser, airline, expires: Date.now()+weeks*7*86400000});
   licenses.push(qrData);
-  const div = document.createElement('div');
-  div.innerHTML = `<p>${currentUser} - ${airline}</p><div id="qr${id}"></div>`;
-  document.getElementById('licenses').appendChild(div);
+
+  const card = document.createElement('div');
+  card.className = 'licenseCard';
+  card.innerHTML = `
+    <p><b>${currentUser}</b></p>
+    <img src="${airlineModels[airline]}" alt="${airline} model" width="150">
+    <p>${airline}</p>
+    <div id="qr${id}" style="margin:auto;"></div>
+  `;
+  document.getElementById('licenses').appendChild(card);
   new QRCode(document.getElementById('qr'+id), qrData);
 }
 
