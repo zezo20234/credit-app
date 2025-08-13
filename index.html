@@ -1,29 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">  
-  <link rel="stylesheet" href="css/iii.css">
-  <title>credits_website</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Flight License App</title>
+<style>
+body { font-family: sans-serif; background: #0b1020; color: white; margin: 0; }
+.hidden { display: none; }
+button { padding: 8px 12px; margin: 4px; cursor: pointer; border-radius: 6px; }
+#flightCounter { position: fixed; top: 10px; left: 10px; background: #10b981; padding: 5px 10px; border-radius: 8px; font-weight: bold; }
+canvas { background: white; }
+</style>
 </head>
 <body>
-  <div>
-    <p>Asser: 1,500C 0D</p>
-  </div>
-  <div>
-    <p>Layan: 0C 5D</p>
-  </div>
-  <hr>
-  <form action="https://formsubmit.co/zezo_z4ever@outlook.com" method="post">
-    <input type="name" placeholder="your name">
-    <br>
-    <br>
-    <input type="send_name" placeholder="send to who">
-    <br>
-    <br>
-    <input type="number" placeholder="send how much" max="2,500" min="100" value="100" step="100">
-    <br>
-    <br>
-    <input type="submit">
-  </form>
+
+<div id="flightCounter" class="hidden">Flights: <span id="flightCount">0</span></div>
+
+<div id="loginScreen">
+<h2>Login</h2>
+<input id="user" placeholder="username"><br>
+<input id="pass" type="password" placeholder="password"><br>
+<button onclick="login()">Login</button>
+<p>asser:456 | lilly:246 | zezo:000</p>
+</div>
+
+<div id="signatureScreen" class="hidden">
+<h2>Signature & Period</h2>
+<canvas id="sigCanvas" width="300" height="150"></canvas><br>
+<button onclick="clearSig()">Clear</button>
+<button onclick="saveSig()">Save Signature</button><br><br>
+<button onclick="setWeeks(1)">1 Week</button>
+<button onclick="setWeeks(2)">2 Weeks</button>
+</div>
+
+<div id="appScreen" class="hidden">
+<h2>Welcome, <span id="who"></span></h2>
+<button onclick="secureAction(addLicense)">Add License</button>
+<button onclick="secureAction(makeFlight)">Make Flight</button>
+<button onclick="secureAction(openScanner)">Open Scanner</button>
+<button onclick="logout()">Logout</button>
+<div id="licenses"></div>
+<video id="video" class="hidden" autoplay></video>
+<canvas id="qrCanvas" class="hidden"></canvas>
+<div id="scanStatus"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
+<script>
+const USERS = { asser:'456', lilly:'246', zezo:'000' };
+let currentUser = null;
+let flightCount = 0;
+let licenses = [];
+let signature = null;
+
+function login() {
+  const u = document.getElementById('user').value.trim();
+  const p = document.getElementById('pass').value.trim();
+  if (USERS[u] === p) {
+    currentUser = u;
+    if (!localStorage.getItem(u+'_signature')) {
+      show('signatureScreen');
+    } else {
+      showApp();
+    }
+  } else {
+    alert('Invalid login');
+  }
+}
+
+function show(id) {
+  document.querySelectorAll('body > div').forEach(d=>d.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+function clearSig() {
+  const ctx = sigCanvas.getContext('2d');
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0,0,sigCanvas.width,sigCanvas.height);
+}
+
+function saveSig() {
+  signature = sigCanvas.toDataURL();
+  localStorage.setItem(currentUser+'_signature', signature);
+  alert('Signature saved.');
+}
+
+function setWeeks(w) {
+  localStorage.setItem(currentUser+'_weeks', w);
+  showApp();
+}
+
+function showApp() {
+  document.getElementById('who').textContent = currentUser;
+  document.getElementById('flightCounter').classList.remove('hidden');
+  show('appScreen');
+}
+
+function logout() {
+  currentUser = null;
+  show('loginScreen');
+}
+
+function secureAction(fn) {
+  const code = prompt('Enter security code:');
+  if (code === '555') fn();
+  else alert('Wrong code');
+}
+
+function addLicense() {
+  const weeks = prompt('How many weeks?','2');
+  const airline = prompt('Airline (EasyJet/Wizz Air/Ryanair)','EasyJet');
+  const id = Date.now();
+  const qrData = JSON.stringify({user:currentUser, airline, expires: Date.now()+weeks*7*86400000});
+  licenses.push(qrData);
+  const div = document.createElement('div');
+  div.innerHTML = `<p>${currentUser} - ${airline}</p><div id="qr${id}"></div>`;
+  document.getElementById('licenses').appendChild(div);
+  new QRCode(document.getElementById('qr'+id), qrData);
+}
+
+function makeFlight() {
+  flightCount++;
+  document.getElementById('flightCount').textContent = flightCount;
+}
+
+function openScanner() {
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('qrCanvas');
+  const ctx = canvas.getContext('2d');
+  video.classList.remove('hidden');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(stream=>{
+    video.srcObject = stream;
+    requestAnimationFrame(tick);
+  });
+  function tick() {
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video,0,0,canvas.width,canvas.height);
+      const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+      const code = jsQR(imgData.data, canvas.width, canvas.height);
+      if (code) {
+        if (licenses.includes(code.data)) {
+          document.getElementById('scanStatus').textContent = 'VALID ✅';
+          new Audio('https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg').play();
+        } else {
+          document.getElementById('scanStatus').textContent = 'INVALID ❌';
+        }
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+}
+
+// Signature drawing
+const sigCanvas = document.getElementById('sigCanvas');
+const ctx = sigCanvas.getContext('2d');
+clearSig();
+let drawing = false;
+sigCanvas.addEventListener('mousedown', e=>{drawing=true; ctx.moveTo(e.offsetX,e.offsetY);});
+sigCanvas.addEventListener('mouseup', ()=>drawing=false);
+sigCanvas.addEventListener('mousemove', e=>{if(drawing){ctx.lineTo(e.offsetX,e.offsetY);ctx.stroke();}});
+sigCanvas.addEventListener('touchstart', e=>{drawing=true; const r=sigCanvas.getBoundingClientRect(); ctx.moveTo(e.touches[0].clientX-r.left,e.touches[0].clientY-r.top);});
+sigCanvas.addEventListener('touchend', ()=>drawing=false);
+sigCanvas.addEventListener('touchmove', e=>{if(drawing){const r=sigCanvas.getBoundingClientRect();ctx.lineTo(e.touches[0].clientX-r.left,e.touches[0].clientY-r.top);ctx.stroke();}});
+</script>
 </body>
-</html> 
+</html>
